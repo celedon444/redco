@@ -1,0 +1,2 @@
+# placeholder — Migraciones SQL manuales o de inicialización
+# Las migraciones Prisma se ubican en backend/prisma/migrations/

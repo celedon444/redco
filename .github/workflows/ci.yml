@@ -1,0 +1,88 @@
+# REDCO — CI/CD Pipeline
+# ============================================================
+# GitHub Actions — Workflow principal
+# Ejecuta: instalación, lint, tests y build
+# ============================================================
+# TODO: Activar y completar cuando los proyectos estén listos
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+
+  # ----------------------------------------------------------
+  # Backend
+  # ----------------------------------------------------------
+  backend:
+    name: Backend — Lint, Test & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+        # TODO: Habilitar cuando ESLint esté configurado
+
+      - name: Run tests
+        run: npm run test
+        # TODO: Habilitar cuando existan tests
+
+      - name: Build
+        run: npm run build
+        # TODO: Habilitar cuando el proyecto esté compilable
+
+  # ----------------------------------------------------------
+  # Frontend
+  # ----------------------------------------------------------
+  frontend:
+    name: Frontend — Lint, Test & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+        # TODO: Habilitar cuando ESLint esté configurado
+
+      - name: Run tests
+        run: npm run test
+        # TODO: Habilitar cuando existan tests
+
+      - name: Build
+        run: npm run build
+        # TODO: Habilitar cuando el proyecto esté compilable

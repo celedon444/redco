@@ -1,0 +1,6 @@
+/* REDCO — Global Styles */
+/* TODO: Definir estilos globales y tokens de diseño */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

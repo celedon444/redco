@@ -1,0 +1,29 @@
+// REDCO — Prisma Schema
+// TODO: Definir el modelo de datos completo en la siguiente fase.
+// Por ahora solo se configura el datasource y el generador.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// MODELOS — Pendientes de diseño
+// ============================================================
+// Los modelos se definirán en la siguiente fase del proyecto.
+// Módulos a modelar:
+//   - identity   (User, Role, Permission)
+//   - reports    (Report, ReportStatus)
+//   - incidents  (Incident, IncidentPriority, IncidentStatus)
+//   - people     (Person, PersonStatus)
+//   - organizations (Organization)
+//   - units      (Unit, UnitStatus)
+//   - assignments (Assignment, AssignmentStatus)
+//   - geography  (Location)
+//   - evidence   (Evidence, EvidenceType)
+//   - audit      (AuditLog)
+// ============================================================

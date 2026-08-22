@@ -1,0 +1,6 @@
+# placeholder — Configuración centralizada de la aplicación
+# TODO: Implementar según necesidades:
+#   - database.config.ts
+#   - jwt.config.ts
+#   - app.config.ts
+#   - Validación de variables de entorno con Joi o zod

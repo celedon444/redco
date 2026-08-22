@@ -1,0 +1,8 @@
+# placeholder — Utilidades y servicios compartidos entre módulos
+# TODO: Implementar según necesidades:
+#   - PrismaModule / PrismaService
+#   - Guards comunes (JwtAuthGuard, RolesGuard)
+#   - Decoradores compartidos
+#   - Interceptores y filtros globales
+#   - Pipes de validación
+#   - Tipos y constantes compartidas

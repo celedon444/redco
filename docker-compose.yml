@@ -1,0 +1,90 @@
+# ============================================================
+# REDCO — Docker Compose (Entorno de Desarrollo)
+# ============================================================
+# Servicios: frontend, backend, postgres (con PostGIS)
+# ============================================================
+
+version: "3.9"
+
+services:
+
+  # ----------------------------------------------------------
+  # PostgreSQL + PostGIS
+  # ----------------------------------------------------------
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: redco_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-redco}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-redco_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-redco_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-redco} -d ${POSTGRES_DB:-redco_db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------
+  # Backend — NestJS
+  # ----------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: redco_backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-redco}:${POSTGRES_PASSWORD:-redco_secret}@postgres:5432/${POSTGRES_DB:-redco_db}
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_production}
+      PORT: ${BACKEND_PORT:-3000}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # TODO: Descomentar cuando el Dockerfile esté listo
+    profiles:
+      - full
+
+  # ----------------------------------------------------------
+  # Frontend — React + Vite
+  # ----------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: redco_frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    # TODO: Descomentar cuando el Dockerfile esté listo
+    profiles:
+      - full
+
+volumes:
+  postgres_data:
+
+    # ============================================================
+    # Uso:
+    #   Solo base de datos:
+    #     docker-compose up postgres
+    #
+    #   Entorno completo:
+    #     docker-compose --profile full up
+    # ============================================================
