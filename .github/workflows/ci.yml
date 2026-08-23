@@ -44,7 +44,7 @@ jobs:
         # TODO: Habilitar cuando ESLint esté configurado
 
       - name: Run tests
-        run: npm run test
+        run: npm test -- --passWithNoTests
         # TODO: Habilitar cuando existan tests
 
       - name: Build
@@ -80,7 +80,7 @@ jobs:
         # TODO: Habilitar cuando ESLint esté configurado
 
       - name: Run tests
-        run: npm run test
+        run: npm run test -- --run --passWithNoTests
         # TODO: Habilitar cuando existan tests
 
       - name: Build
