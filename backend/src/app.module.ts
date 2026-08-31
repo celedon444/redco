@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './shared/prisma/prisma.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -12,6 +13,8 @@ import { PrismaModule } from './shared/prisma/prisma.module';
 
     // Acceso global a la base de datos via Prisma
     PrismaModule,
+
+    AuthModule,
 
     // ----------------------------------------------------
     // Módulos de dominio — se registran en bloques posteriores
