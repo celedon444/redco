@@ -20,6 +20,8 @@ import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
+import { Roles } from "./decorators/roles.decorator";
+import { RolesGuard } from './guards/roles.guard';
 
 @ApiTags("Autenticación")
 @Controller("auth")
@@ -61,7 +63,8 @@ export class AuthController {
   }
 
   @Get("me")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMINISTRATOR')
   @ApiBearerAuth("JWT-auth")
   @ApiOperation({
     summary: "Obtener usuario autenticado",
