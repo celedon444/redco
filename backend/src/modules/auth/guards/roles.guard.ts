@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 import { ROLES_KEY } from '../decorators/roles.decorator';
@@ -13,10 +8,10 @@ export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<string[]>(
-      ROLES_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
@@ -26,15 +21,11 @@ export class RolesGuard implements CanActivate {
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException(
-        'No se encontró un usuario autenticado.',
-      );
+      throw new ForbiddenException('No se encontró un usuario autenticado.');
     }
 
     if (!requiredRoles.includes(user.role)) {
-      throw new ForbiddenException(
-        'No tienes permisos para realizar esta operación.',
-      );
+      throw new ForbiddenException('No tienes permisos para realizar esta operación.');
     }
 
     return true;

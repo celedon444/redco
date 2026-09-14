@@ -42,15 +42,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
 
     if (!user) {
-      throw new UnauthorizedException(
-        'El usuario asociado al token no existe.',
-      );
+      throw new UnauthorizedException('El usuario asociado al token no existe.');
     }
 
     if (user.status !== 'ACTIVE') {
-      throw new UnauthorizedException(
-        'El usuario no está activo.',
-      );
+      throw new UnauthorizedException('El usuario no está activo.');
     }
 
     return {

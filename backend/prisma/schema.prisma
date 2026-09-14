@@ -164,6 +164,13 @@ enum IncidentAssignmentStatus {
   CANCELLED
 }
 
+enum AffectationLevel {
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+}
+
 // ============================================================
 // ENTITIES
 // ============================================================
@@ -199,6 +206,7 @@ model Organization {
   status      OrganizationStatus
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
+  location    Unsupported("geometry(Point, 4326)")?
 
   responseUnits ResponseUnit[]
 }
@@ -225,6 +233,7 @@ model Incident {
   type         IncidentType
   severity     IncidentSeverity
   status       IncidentStatus
+  magnitude    Decimal?         @db.Decimal(4, 2)
   location     Unsupported("geometry(Point, 4326)")?
   startedAt    DateTime
   controlledAt DateTime?
@@ -239,6 +248,7 @@ model Incident {
   infrastructures   Infrastructure[]
   humanitarianNeeds HumanitarianNeed[]
   assignments       IncidentAssignment[]
+  affectationZones  AffectationZone[]
 
   @@index([status])
   @@index([type])
@@ -394,4 +404,25 @@ model AuditLog {
   createdAt  DateTime @default(now())
 
   user       User     @relation(fields: [userId], references: [id])
+}
+
+// ============================================================
+// MAPA DE AFECTACIÓN (terremotos)
+// ============================================================
+
+model AffectationZone {
+  id                String          @id @default(uuid()) @db.Uuid
+  incidentId        String          @db.Uuid
+  name              String
+  level             AffectationLevel
+  description       String?
+  estimatedAffected Int?
+  location          Unsupported("geometry(Polygon, 4326)")
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  incident          Incident        @relation(fields: [incidentId], references: [id])
+
+  @@index([incidentId])
+  @@index([level])
 }

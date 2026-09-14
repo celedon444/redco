@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { MapModule } from './modules/map/map.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AuthModule } from './modules/auth/auth.module';
     PrismaModule,
 
     AuthModule,
+    MapModule,
 
     // ----------------------------------------------------
     // Módulos de dominio — se registran en bloques posteriores

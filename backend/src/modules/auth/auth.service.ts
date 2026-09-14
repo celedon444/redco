@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
@@ -24,9 +20,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException(
-        'Ya existe un usuario registrado con este correo.',
-      );
+      throw new ConflictException('Ya existe un usuario registrado con este correo.');
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
@@ -66,19 +60,14 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas.');
     }
 
-    const passwordValid = await bcrypt.compare(
-      password,
-      user.passwordHash,
-    );
+    const passwordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!passwordValid) {
       throw new UnauthorizedException('Credenciales inválidas.');
     }
 
     if (user.status !== 'ACTIVE') {
-      throw new UnauthorizedException(
-        'El usuario no está activo.',
-      );
+      throw new UnauthorizedException('El usuario no está activo.');
     }
 
     const payload = {
