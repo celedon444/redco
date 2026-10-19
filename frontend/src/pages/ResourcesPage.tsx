@@ -1,30 +1,32 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 
-import { useMapOverview } from '@/hooks/useMapOverview';
-import {
-  RESOURCE_BY_KIND,
-  RESOURCE_KEYS,
-  pointToLatLng,
-} from '@/lib/overview';
-import type {
-  GeoJsonFeature,
-  ResourceFeatureProperties,
-} from '@/types/map';
+import { useMapOverview } from "@/hooks/useMapOverview";
+import { RESOURCE_BY_KIND, RESOURCE_KEYS, pointToLatLng } from "@/lib/overview";
+import type { GeoJsonFeature, ResourceFeatureProperties } from "@/types/map";
 
 const STATUS_STYLES: Record<string, string> = {
-  ACTIVE: 'border-emerald-400/30 bg-emerald-500/15 text-emerald-300',
-  AVAILABLE: 'border-sky-400/30 bg-sky-500/15 text-sky-300',
-  MAINTENANCE: 'border-amber-400/30 bg-amber-500/15 text-amber-300',
-  OFFLINE: 'border-rose-400/30 bg-rose-500/15 text-rose-300',
+  ACTIVE: "border-emerald-400/30 bg-emerald-500/15 text-emerald-300",
+  AVAILABLE: "border-sky-400/30 bg-sky-500/15 text-sky-300",
+  MAINTENANCE: "border-amber-400/30 bg-amber-500/15 text-amber-300",
+  OFFLINE: "border-rose-400/30 bg-rose-500/15 text-rose-300",
 };
 
-const defaultStatusStyle =
-  'border-white/10 bg-white/5 text-slate-300';
+const defaultStatusStyle = "border-white/10 bg-white/5 text-slate-300";
 
 export default function ResourcesPage() {
   const { overview, loading, error, reload } = useMapOverview();
-  const [query, setQuery] = useState('');
-  const [activeKind, setActiveKind] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [query, setQuery] = useState("");
+
+  // Sincroniza el filtro con el parámetro 'tipo' de la URL (ej: ?tipo=HEALTH)
+  const tipoParam = searchParams.get("tipo");
+  const [activeKind, setActiveKind] = useState<string | null>(tipoParam);
+
+  useEffect(() => {
+    setActiveKind(tipoParam);
+  }, [tipoParam]);
 
   const features = useMemo(
     () => overview?.resources.features ?? [],
@@ -46,11 +48,20 @@ export default function ResourcesPage() {
       if (activeKind && feature.properties.kind !== activeKind) return false;
       if (!q) return true;
       const { name, organizationName } = feature.properties;
-      return (
-        `${name} ${organizationName ?? ''}`.toLowerCase().includes(q)
-      );
+      return `${name} ${organizationName ?? ""}`.toLowerCase().includes(q);
     });
   }, [features, query, activeKind]);
+
+  const handleKindClick = (kind: string | null) => {
+    setActiveKind(kind);
+    const newParams = new URLSearchParams(searchParams);
+    if (kind) {
+      newParams.set("tipo", kind);
+    } else {
+      newParams.delete("tipo");
+    }
+    setSearchParams(newParams);
+  };
 
   if (loading) {
     return (
@@ -59,9 +70,7 @@ export default function ResourcesPage() {
           <div className="animate-soft-float mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-rose-600 to-orange-500 shadow-2xl shadow-rose-900/50">
             <span className="text-3xl">🛰️</span>
           </div>
-          <p className="mb-4 mt-4 text-sm text-slate-400">
-            Cargando recursos…
-          </p>
+          <p className="mb-4 mt-4 text-sm text-slate-400">Cargando recursos…</p>
           <div className="shimmer-bar h-1.5 w-full" />
         </div>
       </div>
@@ -72,10 +81,14 @@ export default function ResourcesPage() {
     return (
       <div className="app-bg flex h-full items-center justify-center text-white">
         <div className="glass panel-in max-w-md p-6 text-center">
-          <div className="animate-soft-float mb-2 inline-block text-4xl">🛰️</div>
-          <h2 className="mb-1 text-lg font-semibold">Recursos no disponibles</h2>
+          <div className="animate-soft-float mb-2 inline-block text-4xl">
+            🛰️
+          </div>
+          <h2 className="mb-1 text-lg font-semibold">
+            Recursos no disponibles
+          </h2>
           <p className="text-sm text-slate-400">
-            {error ?? 'No hay datos cargados. Ejecuta el seed del backend.'}
+            {error ?? "No hay datos cargados. Ejecuta el seed del backend."}
           </p>
           <button
             type="button"
@@ -102,14 +115,14 @@ export default function ResourcesPage() {
             </h1>
           </div>
           <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
-            <span className="font-bold text-white">{features.length}</span>{' '}
-            recursos en mapa
+            <span className="font-bold text-white">{filtered.length}</span>{" "}
+            recursos filtrados
           </div>
         </div>
 
         <div
           className="glass panel-in mt-5 p-3 text-white"
-          style={{ animationDelay: '120ms' }}
+          style={{ animationDelay: "120ms" }}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
@@ -128,7 +141,7 @@ export default function ResourcesPage() {
                 label="Todos"
                 count={features.length}
                 active={activeKind === null}
-                onClick={() => setActiveKind(null)}
+                onClick={() => handleKindClick(null)}
               />
               {[...RESOURCE_KEYS]
                 .sort((a, b) => (countsByKind[b] ?? 0) - (countsByKind[a] ?? 0))
@@ -138,7 +151,7 @@ export default function ResourcesPage() {
                     label={`${RESOURCE_BY_KIND[kind].emoji} ${RESOURCE_BY_KIND[kind].label}`}
                     count={countsByKind[kind] ?? 0}
                     active={activeKind === kind}
-                    onClick={() => setActiveKind(kind)}
+                    onClick={() => handleKindClick(kind)}
                   />
                 ))}
             </div>
@@ -147,7 +160,7 @@ export default function ResourcesPage() {
 
         <div
           className="glass panel-in mt-4 overflow-hidden"
-          style={{ animationDelay: '220ms' }}
+          style={{ animationDelay: "220ms" }}
         >
           {filtered.length === 0 ? (
             <div className="p-10 text-center text-sm text-slate-400">
@@ -207,8 +220,8 @@ function FilterChip({
       onClick={onClick}
       className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-300 ${
         active
-          ? 'border-rose-400/40 bg-rose-500/15 text-white shadow-lg shadow-rose-900/20'
-          : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white'
+          ? "border-rose-400/40 bg-rose-500/15 text-white shadow-lg shadow-rose-900/20"
+          : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white"
       }`}
     >
       {label}
@@ -265,7 +278,7 @@ function ResourceRow({
         </span>
       </td>
       <td className="px-4 py-3">
-        {assignmentStatus === 'ACTIVE' ? (
+        {assignmentStatus === "ACTIVE" ? (
           <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
             🚨 En zona
           </span>
@@ -278,7 +291,7 @@ function ResourceRow({
       <td className="px-4 py-3 text-right font-mono text-xs text-slate-400">
         {position
           ? `${position[0].toFixed(3)}°, ${position[1].toFixed(3)}°`
-          : '—'}
+          : "—"}
       </td>
     </tr>
   );

@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import * as L from 'leaflet';
+import { useMemo, useEffect } from "react";
+import * as L from "leaflet";
 import {
   MapContainer,
   Marker,
@@ -7,10 +7,11 @@ import {
   Polyline,
   TileLayer,
   ZoomControl,
-} from 'react-leaflet';
+} from "react-leaflet";
+import { useSearchParams } from "react-router-dom";
 
-import { useCountUp } from '@/hooks/useCountUp';
-import { useMapOverview } from '@/hooks/useMapOverview';
+import { useCountUp } from "@/hooks/useCountUp";
+import { useMapOverview } from "@/hooks/useMapOverview";
 import {
   RESOURCE_BY_KIND,
   ZONE_COLORS,
@@ -19,30 +20,30 @@ import {
   polygonToLatLngs,
   zoneCentroid,
   type Coords,
-} from '@/lib/overview';
+} from "@/lib/overview";
 
 const SHORT_STATUS: Record<string, string> = {
-  ASSIGNED: 'Asignada',
-  ACTIVE: 'En zona',
-  COMPLETED: 'Completada',
-  CANCELLED: 'Cancelada',
+  ASSIGNED: "Asignada",
+  ACTIVE: "En zona",
+  COMPLETED: "Completada",
+  CANCELLED: "Cancelada",
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  ASSIGNED: 'border-sky-400/30 bg-sky-500/15 text-sky-300',
-  ACTIVE: 'border-emerald-400/30 bg-emerald-500/15 text-emerald-300',
-  COMPLETED: 'border-lime-400/30 bg-lime-500/15 text-lime-300',
-  CANCELLED: 'border-rose-400/30 bg-rose-500/15 text-rose-300',
+  ASSIGNED: "border-sky-400/30 bg-sky-500/15 text-sky-300",
+  ACTIVE: "border-emerald-400/30 bg-emerald-500/15 text-emerald-300",
+  COMPLETED: "border-lime-400/30 bg-lime-500/15 text-lime-300",
+  CANCELLED: "border-rose-400/30 bg-rose-500/15 text-rose-300",
 };
 
-const defaultStatusStyle = 'border-white/10 bg-white/5 text-slate-300';
+const defaultStatusStyle = "border-white/10 bg-white/5 text-slate-300";
 
 function assignmentIcon(kind: string, index: number): L.DivIcon {
   const config = RESOURCE_BY_KIND[kind as keyof typeof RESOURCE_BY_KIND];
-  const color = config?.color ?? '#94a3b8';
-  const emoji = config?.emoji ?? '🚙';
+  const color = config?.color ?? "#94a3b8";
+  const emoji = config?.emoji ?? "🚙";
   return L.divIcon({
-    className: '',
+    className: "",
     html: `<div class="resource-marker" style="width:26px;height:26px;font-size:13px;border-color:${color};color:${color};animation-delay:${(
       0.15 +
       index * 0.06
@@ -90,12 +91,17 @@ function SummaryChip({
 
 export default function AssignmentPage() {
   const { overview, loading, error, reload } = useMapOverview();
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const assignments = useMemo(
-    () => overview?.assignments ?? [],
-    [overview],
-  );
+  // Sincroniza el filtro local con el parámetro 'estado' de la URL (ej: ?estado=ACTIVE)
+  const estadoParam = searchParams.get("estado");
+  const [statusFilter, setStatusFilter] = useState<string | null>(estadoParam);
+
+  useEffect(() => {
+    setStatusFilter(estadoParam);
+  }, [estadoParam]);
+
+  const assignments = useMemo(() => overview?.assignments ?? [], [overview]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -110,13 +116,12 @@ export default function AssignmentPage() {
     [statusCounts],
   );
 
-  const filtered = useMemo(
-    () =>
-      assignments.filter(
-        (assignment) => !statusFilter || assignment.status === statusFilter,
-      ),
-    [assignments, statusFilter],
-  );
+  const filtered = useMemo(() => {
+    return assignments.filter((assignment) => {
+      if (statusFilter && assignment.status !== statusFilter) return false;
+      return true;
+    });
+  }, [assignments, statusFilter]);
 
   const zones = useMemo(() => overview?.zones.features ?? [], [overview]);
 
@@ -146,9 +151,20 @@ export default function AssignmentPage() {
 
   const counts = {
     total: assignments.length,
-    active: assignments.filter((a) => a.status === 'ACTIVE').length,
+    active: assignments.filter((a) => a.status === "ACTIVE").length,
     withZone: assignments.filter((a) => a.zoneId != null).length,
-    completed: assignments.filter((a) => a.status === 'COMPLETED').length,
+    completed: assignments.filter((a) => a.status === "COMPLETED").length,
+  };
+
+  const handleFilterClick = (status: string | null) => {
+    setStatusFilter(status);
+    const newParams = new URLSearchParams(searchParams);
+    if (status) {
+      newParams.set("estado", status);
+    } else {
+      newParams.delete("estado");
+    }
+    setSearchParams(newParams);
   };
 
   if (loading) {
@@ -171,10 +187,14 @@ export default function AssignmentPage() {
     return (
       <div className="app-bg flex h-full items-center justify-center text-white">
         <div className="glass panel-in max-w-md p-6 text-center">
-          <div className="animate-soft-float mb-2 inline-block text-4xl">🛰️</div>
-          <h2 className="mb-1 text-lg font-semibold">Asignaciones no disponibles</h2>
+          <div className="animate-soft-float mb-2 inline-block text-4xl">
+            🛰️
+          </div>
+          <h2 className="mb-1 text-lg font-semibold">
+            Asignaciones no disponibles
+          </h2>
           <p className="text-sm text-slate-400">
-            {error ?? 'No hay datos cargados. Ejecuta el seed del backend.'}
+            {error ?? "No hay datos cargados. Ejecuta el seed del backend."}
           </p>
           <button
             type="button"
@@ -241,7 +261,7 @@ export default function AssignmentPage() {
 
         <div
           className="glass panel-in mt-4 overflow-hidden"
-          style={{ animationDelay: '420ms' }}
+          style={{ animationDelay: "420ms" }}
         >
           {bounds ? (
             <MapContainer
@@ -285,8 +305,8 @@ export default function AssignmentPage() {
                 const centroid = zone ? zoneCentroid(zone.geometry) : null;
                 if (!centroid) return null;
                 const color =
-                  ZONE_COLORS[assignment.zoneLevel ?? 'MODERATE']?.fill ??
-                  '#60a5fa';
+                  ZONE_COLORS[assignment.zoneLevel ?? "MODERATE"]?.fill ??
+                  "#60a5fa";
                 return (
                   <Polyline
                     key={`line-${assignment.id}`}
@@ -295,7 +315,7 @@ export default function AssignmentPage() {
                       color,
                       weight: 2,
                       opacity: 0.6,
-                      dashArray: '4 8',
+                      dashArray: "4 8",
                     }}
                     interactive={false}
                   />
@@ -325,14 +345,14 @@ export default function AssignmentPage() {
 
         <div
           className="glass panel-in mt-4 p-3 text-white"
-          style={{ animationDelay: '500ms' }}
+          style={{ animationDelay: "500ms" }}
         >
           <div className="flex flex-wrap items-center gap-1.5">
             <FilterChip
               label="Todas"
               count={assignments.length}
               active={statusFilter === null}
-              onClick={() => setStatusFilter(null)}
+              onClick={() => handleFilterClick(null)}
             />
             {statuses.map((status) => (
               <FilterChip
@@ -341,7 +361,7 @@ export default function AssignmentPage() {
                 count={statusCounts[status] ?? 0}
                 active={statusFilter === status}
                 onClick={() =>
-                  setStatusFilter(statusFilter === status ? null : status)
+                  handleFilterClick(statusFilter === status ? null : status)
                 }
               />
             ))}
@@ -350,7 +370,7 @@ export default function AssignmentPage() {
 
         <div
           className="glass panel-in mt-4 overflow-hidden"
-          style={{ animationDelay: '580ms' }}
+          style={{ animationDelay: "580ms" }}
         >
           {filtered.length === 0 ? (
             <div className="p-10 text-center text-sm text-slate-400">
@@ -389,13 +409,13 @@ export default function AssignmentPage() {
                             <span
                               className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-base"
                               style={{
-                                background: `${config?.color ?? '#94a3b8'}1f`,
+                                background: `${config?.color ?? "#94a3b8"}1f`,
                                 boxShadow: `inset 0 0 0 1px ${
-                                  config?.color ?? '#94a3b8'
+                                  config?.color ?? "#94a3b8"
                                 }40`,
                               }}
                             >
-                              {config?.emoji ?? '🚙'}
+                              {config?.emoji ?? "🚙"}
                             </span>
                             <div className="leading-tight">
                               <div className="font-semibold text-white">
@@ -415,9 +435,12 @@ export default function AssignmentPage() {
                             <span
                               className="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
                               style={{
-                                borderColor: `${ZONE_COLORS[assignment.zoneLevel ?? 'MODERATE']?.fill}55`,
-                                background: `${ZONE_COLORS[assignment.zoneLevel ?? 'MODERATE']?.fill}1f`,
-                                color: ZONE_COLORS[assignment.zoneLevel ?? 'MODERATE']?.fill,
+                                borderColor: `${ZONE_COLORS[assignment.zoneLevel ?? "MODERATE"]?.fill}55`,
+                                background: `${ZONE_COLORS[assignment.zoneLevel ?? "MODERATE"]?.fill}1f`,
+                                color:
+                                  ZONE_COLORS[
+                                    assignment.zoneLevel ?? "MODERATE"
+                                  ]?.fill,
                               }}
                             >
                               {assignment.zoneName}
@@ -474,8 +497,8 @@ function FilterChip({
       onClick={onClick}
       className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-300 ${
         active
-          ? 'border-rose-400/40 bg-rose-500/15 text-white shadow-lg shadow-rose-900/20'
-          : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white'
+          ? "border-rose-400/40 bg-rose-500/15 text-white shadow-lg shadow-rose-900/20"
+          : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20 hover:text-white"
       }`}
     >
       {label}

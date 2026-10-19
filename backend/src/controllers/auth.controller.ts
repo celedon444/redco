@@ -57,4 +57,6 @@ export class AuthController {
     description: 'Endpoint protegido que devuelve la información contenida en el JWT validado.',})
   @ApiResponse({status: 200,description: 'Token válido y usuario autenticado.',})
   @ApiResponse({status: 401,description: 'Token ausente, inválido o expirado.',})
-  async me(@Req() request: Request) {return request.user;}}
+  async me(@Req() request: Request) {return request.user;
+  }
+}
