@@ -25,6 +25,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // Excluimos la contraseña antes de retornar el usuario
     const { passwordHash, ...result } = user;
-    return result;
+    return {
+      ...result,
+      sub: user.id,
+    };
   }
 }

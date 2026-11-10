@@ -52,7 +52,7 @@ const DEFAULT_VISIBLE: Record<string, boolean> = {
   ...Object.fromEntries(RESOURCE_KEYS.map((key) => [key, true])),
 };
 
-const AUTO_REFRESH_SECONDS = 30;
+const AUTO_REFRESH_SECONDS = 1800;
 
 const epicenterIcon = L.divIcon({
   className: 'epicenter-icon-wrapper',
@@ -409,14 +409,11 @@ function RoutesLayer({
 // Recursos (hospitales, ambulancias, bomberos...)
 // ---------------------------------------------------------------------
 
-function buildResourceIcon(kind: ResourceKind, index: number): L.DivIcon {
+function buildResourceIcon(kind: ResourceKind): L.DivIcon {
   const config = RESOURCE_BY_KIND[kind];
   return L.divIcon({
     className: '',
-    html: `<div class="resource-marker" style="border-color:${config.color};color:${config.color};animation-delay:${(
-      0.25 +
-      index * 0.07
-    ).toFixed(2)}s">${config.emoji}</div>`,
+    html: `<div class="resource-marker" style="border-color:${config.color};color:${config.color}">${config.emoji}</div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 16],
   });
@@ -429,7 +426,7 @@ function ResourcesLayer({
 }) {
   return (
     <>
-      {features.map((feature, index) => {
+      {features.map((feature) => {
         const position = pointToLatLng(feature.geometry);
         if (!position) return null;
         const { kind, name, status, organizationName, assignmentStatus } =
@@ -439,7 +436,7 @@ function ResourcesLayer({
           <Marker
             key={feature.properties.id}
             position={position}
-            icon={buildResourceIcon(kind, index)}
+            icon={buildResourceIcon(kind)}
           >
             <Tooltip direction="top" opacity={1}>
               <div className="font-semibold text-white">

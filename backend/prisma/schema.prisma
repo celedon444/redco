@@ -17,8 +17,8 @@ datasource db {
 
 enum UserRole {
   CITIZEN
-  EMERGENCY_OPERATOR
   RESPONSE_PERSONNEL
+  VOLUNTEER
   ADMINISTRATOR
 }
 
@@ -26,6 +26,18 @@ enum UserStatus {
   ACTIVE
   INACTIVE
   SUSPENDED
+}
+
+enum VolunteerApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum VictimType {
+  DECEASED
+  INJURED
+  SAFE
 }
 
 enum IncidentType {
@@ -193,6 +205,10 @@ model User {
   auditLogs       AuditLog[]
   evidences       Evidence[] @relation("EvidenceUploadedBy")
   reviewedReports Report[]   @relation("ReportReviewedBy")
+  lostRelativeReports LostRelativeReport[]
+  volunteerApplications VolunteerApplication[] @relation("VolunteerApplicationsByUser")
+  reviewedVolunteerApplications VolunteerApplication[] @relation("VolunteerApplicationsReviewedBy")
+  reportedPersonCases   PersonCase[]         @relation("PersonCasesReportedBy")
 }
 
 model Organization {
@@ -209,6 +225,26 @@ model Organization {
   location    Unsupported("geometry(Point, 4326)")?
 
   responseUnits ResponseUnit[]
+  volunteerApplications VolunteerApplication[]
+}
+
+model VolunteerApplication {
+  id               String                   @id @default(uuid()) @db.Uuid
+  userId           String                   @db.Uuid
+  organizationId   String?                  @db.Uuid
+  status           VolunteerApplicationStatus @default(PENDING)
+  notes            String?
+  reviewedById     String?                  @db.Uuid
+  reviewedAt       DateTime?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  user                         User                              @relation("VolunteerApplicationsByUser", fields: [userId], references: [id])
+  organization                 Organization?                     @relation(fields: [organizationId], references: [id])
+  reviewedBy                   User?                             @relation("VolunteerApplicationsReviewedBy", fields: [reviewedById], references: [id])
+
+  @@index([userId])
+  @@index([status])
 }
 
 model ResponseUnit {
@@ -249,6 +285,7 @@ model Incident {
   humanitarianNeeds HumanitarianNeed[]
   assignments       IncidentAssignment[]
   affectationZones  AffectationZone[]
+  lostRelativeReports LostRelativeReport[]
 
   @@index([status])
   @@index([type])
@@ -319,19 +356,47 @@ model PersonCase {
   personId          String           @db.Uuid
   incidentId        String           @db.Uuid
   status            PersonCaseStatus
+  victimType        VictimType?
   description       String?
   lastKnownLocation Unsupported("geometry(Point, 4326)")?
+  transferredTo     String?
+  transferredAt     DateTime?
   reportedAt        DateTime         @default(now())
   verifiedAt        DateTime?
   verifiedById      String?          @db.Uuid
+  reporterId        String?          @db.Uuid
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
   person            Person           @relation(fields: [personId], references: [id])
   incident          Incident         @relation(fields: [incidentId], references: [id])
+  reporter          User?            @relation("PersonCasesReportedBy", fields: [reporterId], references: [id])
 
   @@index([incidentId])
   @@index([personId])
+  @@index([status])
+  @@index([victimType])
+}
+
+model LostRelativeReport {
+  id            String     @id @default(uuid()) @db.Uuid
+  reporterId    String     @db.Uuid
+  incidentId    String?    @db.Uuid
+  fullName      String
+  age           Int?
+  gender        String?
+  phone         String?
+  lastKnownLocation Unsupported("geometry(Point, 4326)")?
+  description   String?
+  status        ReportStatus @default(RECEIVED)
+  reportedAt    DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  reporter      User       @relation(fields: [reporterId], references: [id])
+  incident      Incident?  @relation(fields: [incidentId], references: [id])
+
+  @@index([reporterId])
+  @@index([incidentId])
   @@index([status])
 }
 

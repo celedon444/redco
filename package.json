@@ -1,0 +1,26 @@
+{
+  "name": "redco",
+  "version": "1.0.0",
+  "description": "> Proyecto académico — Asignatura: Arquitectura de Software",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "node index.js",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/celedon444/redco.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/celedon444/redco/issues"
+  },
+  "homepage": "https://github.com/celedon444/redco#readme"
+}

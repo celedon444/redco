@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { OdooFilterBar } from "./OdooFilterBar";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NAV_ITEMS = [
   {
@@ -23,6 +24,19 @@ const NAV_ITEMS = [
     full: "Recursos desplegados",
     icon: "🏥",
   },
+  { to: "/voluntariado", label: "Voluntariado", full: "Solicitar voluntariado", icon: "🤝" },
+  {
+    to: "/personas-danadas",
+    label: "Daños",
+    full: "Personas damnificadas",
+    icon: "🆘",
+  },
+  {
+    to: "/familiar-perdido",
+    label: "Familiares",
+    full: "Familiar perdido",
+    icon: "🔍",
+  },
 ];
 
 function desktopLinkClass(isActive: boolean): string {
@@ -35,6 +49,15 @@ function desktopLinkClass(isActive: boolean): string {
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const { usuario, cerrarSesion, estaAutenticado } = useAuth();
+  const navigate = useNavigate();
+  const esAdmin = usuario?.rol === "ADMINISTRADOR" || (usuario as any)?.role === "ADMINISTRATOR";
+  const nombreUsuario = (usuario?.nombre ? `${usuario.nombre} ${usuario.apellido ?? ''}`.trim() : (usuario?.email || 'Usuario'));
+
+  const manejarCerrarSesion = () => {
+    cerrarSesion();
+    navigate("/");
+  };
 
   return (
     <header className="relative z-[1100] flex items-center justify-between gap-3 border-b border-white/10 bg-gradient-to-b from-slate-950 to-slate-900/90 px-4 py-3 backdrop-blur md:px-6">
@@ -81,12 +104,49 @@ export default function Header() {
               {item.label}
             </NavLink>
           ))}
+          {esAdmin && (
+            <NavLink
+              to="/incidentes"
+              className={({ isActive }) => desktopLinkClass(isActive)}
+            >
+              <span aria-hidden>⚠️</span>
+              Incidentes
+            </NavLink>
+          )}
         </nav>
 
         <span className="hidden items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-300 xl:flex">
           <span className="live-dot relative inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
           En vivo
         </span>
+
+        {/* Barra de usuario */}
+        {estaAutenticado ? (
+          <div className="hidden md:flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-sm text-slate-200">
+            <span className="font-medium">{nombreUsuario}</span>
+            <button
+              onClick={manejarCerrarSesion}
+              className="text-xs bg-red-500/20 hover:bg-red-500/40 text-red-300 px-2 py-1 rounded transition"
+            >
+              Cerrar sesión
+            </button>
+          </div>
+        ) : (
+          <>
+            <NavLink
+              to="/login"
+              className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-sm transition"
+            >
+              Iniciar sesión
+            </NavLink>
+            <NavLink
+              to="/registro"
+              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-sm transition"
+            >
+              Regístrate
+            </NavLink>
+          </>
+        )}
 
         {/* Botón para menú móvil */}
         <button
@@ -141,12 +201,29 @@ export default function Header() {
               }
               style={{ animationDelay: `${index * 70}ms` }}
             >
-              <span aria-hidden className="text-base">
-                {item.icon}
-              </span>
+              <span aria-hidden className="text-base">{item.icon}</span>
               {item.full}
             </NavLink>
           ))}
+          {esAdmin && (
+            <NavLink
+              to="/incidentes"
+              onClick={() => setOpen(false)}
+              className="panel-in flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition text-red-300 hover:bg-white/5"
+            >
+              <span aria-hidden className="text-base">⚠️</span>
+              Incidentes (Admin)
+            </NavLink>
+          )}
+          {estaAutenticado && (
+            <button
+              onClick={manejarCerrarSesion}
+              className="panel-in flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition text-red-300 hover:bg-white/5"
+            >
+              <span aria-hidden className="text-base">🚪</span>
+              Cerrar sesión
+            </button>
+          )}
         </nav>
       )}
     </header>
